@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Cafetera - Reportes de Ventas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f0e8 0%, #efe9df 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(139, 69, 19, 0.2);
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .tarjetas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tarjeta {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #8B4513;
+            transition: transform 0.3s;
+        }
+        
+        .tarjeta:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tarjeta-titulo {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .tarjeta-monto {
+            font-size: 28px;
+            color: #8B4513;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .tarjeta-info {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .comparacion {
+            font-size: 12px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .comparacion.positiva {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .comparacion.negativa {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .seccion {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid #8B4513;
+        }
+        
+        .seccion h2 {
+            margin-bottom: 20px;
+            color: #8B4513;
+            font-size: 24px;
+        }
+        
+        .grafico-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .dos-columnas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .dos-columnas {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        
+        table th {
+            background: #8B4513;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .filtros {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filtro-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #D2B48C;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #8B4513;
+            font-size: 13px;
+        }
+        
+        .filtro-btn:hover {
+            background: #f5f0e8;
+        }
+        
+        .filtro-btn.activo {
+            background: #8B4513;
+            color: white;
+        }
+        
+        input[type="date"], input[type="number"], select {
+            padding: 10px;
+            border: 2px solid #D2B48C;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .cargando {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+        
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .stat-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #8B4513;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            color: #8B4513;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .sin-datos {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 La Cafetera - Reportes</h1>
+            <p>Panel de Administración de Ventas Avanzado</p>
+        </div>
+
+        <!-- Tarjetas de Resumen Principal -->
+        <div class="tarjetas">
+            <div class="tarjeta">
+                <div class="tarjeta-titulo" id="tituloVentasFecha">💰 Ventas de Hoy</div>
+                <div class="tarjeta-monto" id="ventasFecha">$0</div>
+                <div class="tarjeta-info">
+                    <span>📦</span>
+                    <span id="pedidosFecha">0 pedidos</span>
+                </div>
+                <div class="comparacion" id="comparacionVentas"></div>
+            </div>
+            
+            <div class="tarjeta">
+                <div class="tarjeta-titulo">🏆 Total Acumulado</div>
+                <div class="tarjeta-monto" id="ventasTotal">$0</div>
+                <div class="tarjeta-info">
+                    <span>📦</span>
+                    <span id="pedidosTotal">0 pedidos</span>
+                </div>
+            </div>
+            
+            <div class="tarjeta">
+                <div class="tarjeta-titulo">💵 Ticket Promedio</div>
+                <div class="tarjeta-monto" id="ticketPromedio">$0</div>
+                <div class="tarjeta-info">
+                    Costo por pedido
+                </div>
+            </div>
+            
+            <div class="tarjeta">
+                <div class="tarjeta-titulo">🎁 Total Propinas</div>
+                <div class="tarjeta-monto" id="totalPropinas">$0</div>
+                <div class="tarjeta-info">
+                    <span id="porcentajePropinas">0%</span> del total
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="dos-columnas">
+            <div class="seccion">
+                <h2>📈 Ventas Últimos 7 Días</h2>
+                <div class="grafico-container">
+                    <canvas id="graficoVentas"></canvas>
+                </div>
+            </div>
+            
+            <div class="seccion">
+                <h2>🔥 Productos Top 5</h2>
+                <div class="grafico-container">
+                    <canvas id="graficoProductos"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Extra -->
+        <div class="seccion">
+            <h2>📊 Estadísticas Detalladas</h2>
+            <div class="stat-row">
+                <div class="stat-item">
+                    <div class="stat-label">Mesa Más Compra</div>
+                    <div class="stat-value" id="mesaMasCompra">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Hora con Más Ventas</div>
+                    <div class="stat-value" id="horaMaxima">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Promedio por Pedido</div>
+                    <div class="stat-value" id="promedioGeneral">$0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Pedidos Pendientes</div>
+                    <div class="stat-value" id="pedidosPendientes">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalle de Ventas -->
+        <div class="seccion">
+            <h2>📋 Detalle de Ventas</h2>
+            
+            <div class="filtros">
+                <button class="filtro-btn activo" onclick="cambiarFiltro('hoy')">Hoy</button>
+                <button class="filtro-btn" onclick="cambiarFiltro('ayer')">Ayer</button>
+                <button class="filtro-btn" onclick="cambiarFiltro('semana')">Esta Semana</button>
+                <button class="filtro-btn" onclick="cambiarFiltro('mes')">Este Mes</button>
+                <button class="filtro-btn" onclick="cambiarFiltro('todo')">Todo</button>
+                <label style="font-weight: bold; color: #8B4513; margin-left: 10px;">📅</label>
+                <input type="date" id="fechaPersonalizada" onchange="cambiarFiltro('personalizada')">
+                <label style="font-weight: bold; color: #8B4513;">🪑 Mesa:</label>
+                <select id="filtroMesa" onchange="aplicarFiltroMesa()">
+                    <option value="">Todas las mesas</option>
+                    <option value="20">⭐ VIP</option>
+                </select>
+                <label style="font-weight: bold; color: #8B4513;">
+                    <input type="checkbox" id="soloConPropina" onchange="aplicarFiltroMesa()"> Solo Propina
+                </label>
+                <button class="filtro-btn" onclick="limpiarFiltros()">🔄 Limpiar</button>
+            </div>
+            
+            <div id="contenidoTabla">
+                <div class="cargando">⏳ Cargando datos...</div>
+            </div>
+        </div>
+
+        <!-- Productos Más Vendidos -->
+        <div class="seccion">
+            <h2>🔥 Top 10 Productos (del filtro seleccionado)</h2>
+            <div id="productosVendidos">
+                <div class="cargando">⏳ Cargando datos...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhpYmEphM9HjnBOzfLZRl1IBxrY34MKgM",
+            authDomain: "la-cafetera.firebaseapp.com",
+            databaseURL: "https://la-cafetera-default-rtdb.firebaseio.com",
+            projectId: "la-cafetera",
+            storageBucket: "la-cafetera.firebasestorage.app",
+            messagingSenderId: "1085725002264",
+            appId: "1:1085725002264:web:300247d311f61070ee516d",
+            measurementId: "G-XGGXLBCKRF"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const pedidosRef = database.ref('pedidos');
+
+        let filtroActual = 'hoy';
+        let todosPedidos = [];
+        let graficoVentas = null;
+        let graficoProductos = null;
+        let mesaFiltro = null;
+
+        function formatearPrecio(valor) {
+            return '$' + Math.round(valor).toLocaleString('es-CO');
+        }
+
+        function esMismaFecha(fecha1, fecha2) {
+            const d1 = new Date(fecha1);
+            const d2 = new Date(fecha2);
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        function estaEnRango(fecha, diasAtras) {
+            const ahora = new Date();
+            const fechaPedido = new Date(fecha);
+            const diferencia = Math.floor((ahora - fechaPedido) / (1000 * 60 * 60 * 24));
+            return diferencia <= diasAtras && diferencia >= 0;
+        }
+
+        function estaEnMes(fecha) {
+            const ahora = new Date();
+            const fechaPedido = new Date(fecha);
+            return fechaPedido.getFullYear() === ahora.getFullYear() &&
+                   fechaPedido.getMonth() === ahora.getMonth();
+        }
+
+        function cargarDatos() {
+            pedidosRef.on('value', (snapshot) => {
+                const pedidos = snapshot.val();
+                
+                if (!pedidos) {
+                    mostrarSinDatos();
+                    return;
+                }
+
+                todosPedidos = Object.entries(pedidos).map(([key, pedido]) => ({
+                    ...pedido,
+                    key: key
+                }));
+
+                calcularResumen();
+                mostrarTabla();
+                mostrarProductosVendidos();
+                actualizarGraficos();
+                calcularEstadisticas();
+                generarOpcionesMesas();
+            });
+        }
+
+        function generarOpcionesMesas() {
+            const mesas = new Set();
+            todosPedidos.forEach(p => {
+                if (p.mesa) mesas.add(parseInt(p.mesa));
+            });
+
+            const select = document.getElementById('filtroMesa');
+            const mesasOrdenadas = Array.from(mesas).sort((a, b) => a - b);
+            
+            mesasOrdenadas.forEach(mesa => {
+                if (!select.querySelector(`option[value="${mesa}"]`)) {
+                    const option = document.createElement('option');
+                    option.value = mesa;
+                    option.textContent = mesa === 20 ? '⭐ VIP' : `Mesa ${mesa}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        function calcularResumen() {
+            const ahora = new Date();
+            const ayer = new Date();
+            ayer.setDate(ayer.getDate() - 1);
+            
+            const pedidosPagados = todosPedidos.filter(p => p.estado === 'pagado');
+            
+            const totalAcumulado = pedidosPagados.reduce((sum, p) => sum + (p.total || 0), 0);
+            document.getElementById('ventasTotal').textContent = formatearPrecio(totalAcumulado);
+            document.getElementById('pedidosTotal').textContent = pedidosPagados.length + ' pedidos';
+            
+            const ventasHoy = pedidosPagados.filter(p => esMismaFecha(p.fechaCompleta, ahora));
+            const totalHoy = ventasHoy.reduce((sum, p) => sum + (p.total || 0), 0);
+            
+            const ventasAyer = pedidosPagados.filter(p => esMismaFecha(p.fechaCompleta, ayer));
+            const totalAyer = ventasAyer.reduce((sum, p) => sum + (p.total || 0), 0);
+            
+            let comparacion = '';
+            if (totalAyer > 0) {
+                const cambio = ((totalHoy - totalAyer) / totalAyer * 100).toFixed(1);
+                if (cambio > 0) {
+                    comparacion = `<div class="comparacion positiva">↑ +${cambio}%</div>`;
+                } else if (cambio < 0) {
+                    comparacion = `<div class="comparacion negativa">↓ ${cambio}%</div>`;
+                } else {
+                    comparacion = `<div class="comparacion">= Sin cambios</div>`;
+                }
+            }
+            document.getElementById('comparacionVentas').innerHTML = comparacion;
+            
+            let ventasFiltradas = [];
+            let tituloTarjeta = '💰 Ventas de Hoy';
+            
+            if (filtroActual === 'hoy') {
+                ventasFiltradas = ventasHoy;
+                tituloTarjeta = '💰 Ventas de Hoy';
+            } else if (filtroActual === 'ayer') {
+                ventasFiltradas = ventasAyer;
+                tituloTarjeta = '📅 Ventas de Ayer';
+            } else if (filtroActual === 'semana') {
+                ventasFiltradas = pedidosPagados.filter(p => estaEnRango(p.fechaCompleta, 7));
+                tituloTarjeta = '📅 Ventas de Esta Semana';
+            } else if (filtroActual === 'mes') {
+                ventasFiltradas = pedidosPagados.filter(p => estaEnMes(p.fechaCompleta));
+                tituloTarjeta = '📅 Ventas de Este Mes';
+            } else if (filtroActual === 'personalizada') {
+                const fechaSeleccionada = document.getElementById('fechaPersonalizada').value;
+                if (fechaSeleccionada) {
+                    ventasFiltradas = pedidosPagados.filter(p => {
+                        const fechaPedido = new Date(p.fechaCompleta);
+                        const fechaBuscada = new Date(fechaSeleccionada);
+                        return esMismaFecha(fechaPedido, fechaBuscada);
+                    });
+                    const fecha = new Date(fechaSeleccionada);
+                    const fechaFormateada = fecha.toLocaleDateString('es-CO', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    });
+                    tituloTarjeta = `📅 Ventas del ${fechaFormateada}`;
+                }
+            } else if (filtroActual === 'todo') {
+                ventasFiltradas = pedidosPagados;
+                tituloTarjeta = '📊 Todas las Ventas';
+            }
+            
+            const totalFecha = ventasFiltradas.reduce((sum, p) => sum + (p.total || 0), 0);
+            const ticketPromedio = ventasFiltradas.length > 0 ? totalFecha / ventasFiltradas.length : 0;
+            const totalPropinas = ventasFiltradas.reduce((sum, p) => sum + (p.propina || 0), 0);
+            const porcentajePropinas = totalFecha > 0 ? ((totalPropinas / totalFecha) * 100).toFixed(1) : 0;
+            
+            document.getElementById('tituloVentasFecha').textContent = tituloTarjeta;
+            document.getElementById('ventasFecha').textContent = formatearPrecio(totalFecha);
+            document.getElementById('pedidosFecha').textContent = ventasFiltradas.length + ' pedidos';
+            document.getElementById('ticketPromedio').textContent = formatearPrecio(ticketPromedio);
+            document.getElementById('totalPropinas').textContent = formatearPrecio(totalPropinas);
+            document.getElementById('porcentajePropinas').textContent = porcentajePropinas + '%';
+        }
+
+        function mostrarTabla() {
+            const ahora = new Date();
+            let pedidosFiltrados = todosPedidos.filter(p => p.estado === 'pagado');
+
+            if (filtroActual === 'hoy') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => esMismaFecha(p.fechaCompleta, ahora));
+            } else if (filtroActual === 'ayer') {
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                pedidosFiltrados = pedidosFiltrados.filter(p => esMismaFecha(p.fechaCompleta, ayer));
+            } else if (filtroActual === 'semana') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => estaEnRango(p.fechaCompleta, 7));
+            } else if (filtroActual === 'mes') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => estaEnMes(p.fechaCompleta));
+            } else if (filtroActual === 'personalizada') {
+                const fechaSeleccionada = document.getElementById('fechaPersonalizada').value;
+                if (fechaSeleccionada) {
+                    pedidosFiltrados = pedidosFiltrados.filter(p => {
+                        const fechaPedido = new Date(p.fechaCompleta);
+                        const fechaBuscada = new Date(fechaSeleccionada);
+                        return esMismaFecha(fechaPedido, fechaBuscada);
+                    });
+                }
+            }
+
+            if (mesaFiltro) {
+                pedidosFiltrados = pedidosFiltrados.filter(p => parseInt(p.mesa) === parseInt(mesaFiltro));
+            }
+
+            if (document.getElementById('soloConPropina').checked) {
+                pedidosFiltrados = pedidosFiltrados.filter(p => (p.propina || 0) > 0);
+            }
+
+            const contenido = document.getElementById('contenidoTabla');
+            
+            if (pedidosFiltrados.length === 0) {
+                contenido.innerHTML = '<div class="sin-datos">📋 No hay ventas en este período</div>';
+                return;
+            }
+
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Mesa</th>
+                        <th>Productos</th>
+                        <th>Propina</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            pedidosFiltrados.reverse().forEach(pedido => {
+                const propina = pedido.propina || 0;
+                const itemsTexto = pedido.items ? pedido.items.map(i => `${i.nombre} x${i.cantidad}`).join(', ') : 'N/A';
+                
+                html += `<tr>
+                    <td>${pedido.fechaSimple || '-'}</td>
+                    <td>${pedido.fecha || '-'}</td>
+                    <td>${parseInt(pedido.mesa) === 20 ? '⭐ VIP' : 'Mesa ' + pedido.mesa}</td>
+                    <td>${itemsTexto}</td>
+                    <td>${formatearPrecio(propina)}</td>
+                    <td style="font-weight: bold; color: #8B4513;">${formatearPrecio(pedido.total)}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+            contenido.innerHTML = html;
+        }
+
+        function mostrarProductosVendidos() {
+            const ahora = new Date();
+            let pedidosFiltrados = todosPedidos.filter(p => p.estado === 'pagado');
+
+            if (filtroActual === 'hoy') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => esMismaFecha(p.fechaCompleta, ahora));
+            } else if (filtroActual === 'ayer') {
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                pedidosFiltrados = pedidosFiltrados.filter(p => esMismaFecha(p.fechaCompleta, ayer));
+            } else if (filtroActual === 'semana') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => estaEnRango(p.fechaCompleta, 7));
+            } else if (filtroActual === 'mes') {
+                pedidosFiltrados = pedidosFiltrados.filter(p => estaEnMes(p.fechaCompleta));
+            } else if (filtroActual === 'personalizada') {
+                const fechaSeleccionada = document.getElementById('fechaPersonalizada').value;
+                if (fechaSeleccionada) {
+                    pedidosFiltrados = pedidosFiltrados.filter(p => {
+                        const fechaPedido = new Date(p.fechaCompleta);
+                        const fechaBuscada = new Date(fechaSeleccionada);
+                        return esMismaFecha(fechaPedido, fechaBuscada);
+                    });
+                }
+            }
+
+            const conteo = {};
+            pedidosFiltrados.forEach(pedido => {
+                if (pedido.items && Array.isArray(pedido.items)) {
+                    pedido.items.forEach(item => {
+                        if (item && item.id && item.id !== 999 && item.nombre) {
+                            const nombre = item.nombre.toString().trim();
+                            conteo[nombre] = (conteo[nombre] || 0) + (parseInt(item.cantidad) || 1);
+                        }
+                    });
+                }
+            });
+
+            const productosOrdenados = Object.entries(conteo)
+                .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+                .sort((a, b) => b.cantidad - a.cantidad)
+                .slice(0, 10);
+
+            const contenedor = document.getElementById('productosVendidos');
+            
+            if (productosOrdenados.length === 0) {
+                contenedor.innerHTML = '<div class="sin-datos">📋 No hay datos de productos</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Producto</th><th>Cantidad</th><th>%</th></tr></thead><tbody>';
+            
+            const totalUnidades = productosOrdenados.reduce((sum, p) => sum + p.cantidad, 0);
+            
+            productosOrdenados.forEach(producto => {
+                const porcentaje = ((producto.cantidad / totalUnidades) * 100).toFixed(1);
+                html += `<tr>
+                    <td>${producto.nombre}</td>
+                    <td style="font-weight: bold; color: #8B4513;">${producto.cantidad} unidades</td>
+                    <td>${porcentaje}%</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            contenedor.innerHTML = html;
+        }
+
+        function actualizarGraficos() {
+            // Gráfico de ventas últimos 7 días
+            const ultimos7Dias = [];
+            const ventas7Dias = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(fecha.getDate() - i);
+                ultimos7Dias.push(fecha.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }));
+                
+                const pedidosDia = todosPedidos.filter(p => p.estado === 'pagado' && esMismaFecha(p.fechaCompleta, fecha));
+                const totalDia = pedidosDia.reduce((sum, p) => sum + (p.total || 0), 0);
+                ventas7Dias.push(totalDia);
+            }
+
+            if (graficoVentas) {
+                graficoVentas.destroy();
+            }
+
+            const ctxVentas = document.getElementById('graficoVentas');
+            if (ctxVentas) {
+                graficoVentas = new Chart(ctxVentas, {
+                    type: 'line',
+                    data: {
+                        labels: ultimos7Dias,
+                        datasets: [{
+                            label: 'Ventas Diarias',
+                            data: ventas7Dias,
+                            borderColor: '#8B4513',
+                            backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Gráfico de productos top 5
+            const pedidosPagados = todosPedidos.filter(p => p.estado === 'pagado');
+            const conteo = {};
+
+            pedidosPagados.forEach(pedido => {
+                if (pedido.items && Array.isArray(pedido.items)) {
+                    pedido.items.forEach(item => {
+                        if (item && item.id && item.id !== 999 && item.nombre) {
+                            const nombre = item.nombre.toString().trim();
+                            conteo[nombre] = (conteo[nombre] || 0) + (parseInt(item.cantidad) || 1);
+                        }
+                    });
+                }
+            });
+
+            const productosTop = Object.entries(conteo)
+                .map(([nombre, cantidad]) => ({ nombre, cantidad }))
+                .sort((a, b) => b.cantidad - a.cantidad)
+                .slice(0, 5);
+
+            if (graficoProductos) {
+                graficoProductos.destroy();
+            }
+
+            const ctxProductos = document.getElementById('graficoProductos');
+            if (ctxProductos && productosTop.length > 0) {
+                graficoProductos = new Chart(ctxProductos, {
+                    type: 'doughnut',
+                    data: {
+                        labels: productosTop.map(p => p.nombre.substring(0, 20)),
+                        datasets: [{
+                            data: productosTop.map(p => p.cantidad),
+                            backgroundColor: [
+                                '#8B4513',
+                                '#A0522D',
+                                '#D2B48C',
+                                '#CD853F',
+                                '#DAA520'
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function calcularEstadisticas() {
+            const pedidosPagados = todosPedidos.filter(p => p.estado === 'pagado');
+            const pedidosPendientes = todosPedidos.filter(p => p.estado === 'pendiente').length;
+
+            // Mesa que más compra
+            const mesasCompras = {};
+            pedidosPagados.forEach(p => {
+                const mesa = p.mesa || 'Sin mesa';
+                mesasCompras[mesa] = (mesasCompras[mesa] || 0) + (p.total || 0);
+            });
+            const mesaTop = Object.entries(mesasCompras).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('mesaMasCompra').textContent = mesaTop ? `Mesa ${mesaTop[0]} (${formatearPrecio(mesaTop[1])})` : '-';
+
+            // Hora con más ventas
+            const horasVentas = {};
+            pedidosPagados.forEach(p => {
+                const hora = (p.fecha || '').split(':')[0];
+                if (hora) horasVentas[hora] = (horasVentas[hora] || 0) + (p.total || 0);
+            });
+            const horaTop = Object.entries(horasVentas).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('horaMaxima').textContent = horaTop ? `${horaTop[0]}:00 hs` : '-';
+
+            // Promedio general
+            const promedioGeneral = pedidosPagados.length > 0 ? 
+                pedidosPagados.reduce((sum, p) => sum + (p.total || 0), 0) / pedidosPagados.length : 0;
+            document.getElementById('promedioGeneral').textContent = formatearPrecio(promedioGeneral);
+
+            document.getElementById('pedidosPendientes').textContent = pedidosPendientes;
+        }
+
+        function cambiarFiltro(tipo) {
+            filtroActual = tipo;
+            
+            document.querySelectorAll('.filtro-btn').forEach(btn => {
+                btn.classList.remove('activo');
+            });
+            
+            if (tipo !== 'personalizada') {
+                event.target.classList.add('activo');
+                document.getElementById('fechaPersonalizada').value = '';
+            }
+            
+            calcularResumen();
+            mostrarTabla();
+            mostrarProductosVendidos();
+            actualizarGraficos();
+        }
+
+        function aplicarFiltroMesa() {
+            mesaFiltro = document.getElementById('filtroMesa').value;
+            mostrarTabla();
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtroMesa').value = '';
+            document.getElementById('soloConPropina').checked = false;
+            document.getElementById('fechaPersonalizada').value = '';
+            mesaFiltro = null;
+            filtroActual = 'hoy';
+            
+            document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('activo'));
+            document.querySelector('.filtro-btn').classList.add('activo');
+            
+            calcularResumen();
+            mostrarTabla();
+            mostrarProductosVendidos();
+            actualizarGraficos();
+        }
+
+        function mostrarSinDatos() {
+            document.getElementById('contenidoTabla').innerHTML = '<div class="sin-datos">📋 No hay datos disponibles</div>';
+            document.getElementById('productosVendidos').innerHTML = '<div class="sin-datos">📋 No hay datos disponibles</div>';
+        }
+
+        cargarDatos();
+    </script>
+</body>
+</html>
