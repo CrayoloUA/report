@@ -492,13 +492,22 @@
             const mesasOrdenadas = Array.from(mesas).sort((a, b) => a - b);
             
             mesasOrdenadas.forEach(mesa => {
-                if (!select.querySelector(`option[value="${mesa}"]`)) {
-                    const option = document.createElement('option');
-                    option.value = mesa;
-                    option.textContent = mesa === 20 ? '⭐ VIP' : `Mesa ${mesa}`;
-                    select.appendChild(option);
-                }
-            });
+    if (!select.querySelector(`option[value="${mesa}"]`)) {
+        const option = document.createElement('option');
+        option.value = mesa;
+        let nombreMesa;
+        if (mesa === 20) {
+            nombreMesa = '⭐ VIP';
+        } else if ([11, 12, 13].includes(mesa)) {
+            nombreMesa = '📦 Para Llevar';
+        } else {
+            nombreMesa = `Mesa ${mesa}`;
+        }
+        option.textContent = nombreMesa;
+        select.appendChild(option);
+    }
+});
+
         }
 
         function calcularResumen() {
@@ -639,7 +648,7 @@
                 html += `<tr>
                     <td>${pedido.fechaSimple || '-'}</td>
                     <td>${pedido.fecha || '-'}</td>
-                    <td>${parseInt(pedido.mesa) === 20 ? '⭐' : pedido.mesa}</td>
+                    <td>${[11, 12, 13].includes(parseInt(pedido.mesa)) ? '📦' : (parseInt(pedido.mesa) === 20 ? '⭐' : pedido.mesa)}</td>
                     <td>${itemsTexto.substring(0, 30)}...</td>
                     <td>${formatearPrecio(pedido.total)}</td>
                 </tr>`;
@@ -828,7 +837,8 @@
                 mesasCompras[mesa] = (mesasCompras[mesa] || 0) + (p.total || 0);
             });
             const mesaTop = Object.entries(mesasCompras).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('mesaMasCompra').textContent = mesaTop ? `Mesa ${mesaTop[0]}` : '-';
+            document.getElementById('mesaMasCompra').textContent = mesaTop ? ([11, 12, 13].includes(parseInt(mesaTop[0])) ? '📦 Para Llevar' : `Mesa ${mesaTop[0]}`) : '-';
+
 
             const horasVentas = {};
             pedidosPagados.forEach(p => {
